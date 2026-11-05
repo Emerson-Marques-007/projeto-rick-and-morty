@@ -42,15 +42,6 @@ projeto-rick-and-morty/
 2. Abra a pasta no VS Code e use a extensão **Live Server** (botão direito no `index.html` > *Open with Live Server*).
    Ou, no terminal, dentro da pasta: `python -m http.server 8000` e acesse `http://localhost:8000`.
 
-## Como publicar no GitHub Pages
-
-1. Crie um repositório público no GitHub.
-2. Envie os arquivos (`index.html`, `style.css`, `script.js`, `README.md`) para a raiz do repositório.
-3. Vá em **Settings > Pages**.
-4. Em **Build and deployment**, escolha **Source: Deploy from a branch**.
-5. Em **Branch**, selecione `main` e a pasta `/ (root)` e clique em **Save**.
-6. Aguarde 1 a 2 minutos. O endereço aparece no topo da tela: `https://SEU-USUARIO.github.io/NOME-DO-REPOSITORIO/`.
-
 ## Tecnologias
 
 HTML5, CSS3 (Grid, Flexbox, variáveis CSS, animações) e JavaScript (Fetch API, Promises, manipulação do DOM, localStorage).
