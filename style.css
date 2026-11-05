@@ -1,0 +1,482 @@
+/*
+ * style.css - Estilos da galeria de personagens (Rick and Morty)
+ * Autor: Emerson Marques Cardoso dos Santos (RA 92924)
+ * Curso: Análise e Desenvolvimento de Sistemas - UniFECAF
+ * Disciplina: Web Development Front-End
+ *
+ * IDEIA VISUAL
+ * O fundo é o céu roxo de outra dimensão. O destaque do topo é um portal verde
+ * que gira (e que é clicável). Cada card é uma "ficha de identificação": tem o
+ * número do personagem e um anel colorido em volta da foto que mostra o status
+ * (verde = vivo, vermelho = morto, cinza = desconhecido).
+ *
+ * Organização: variáveis -> reset -> topo e portal -> controles -> cards -> rodapé -> celular.
+ * Somente CSS puro, sem frameworks.
+ */
+
+/* Variáveis de cor (custom properties). Mudando aqui, o tema do site inteiro muda. */
+:root {
+  --espaco: #130a30;      /* roxo bem escuro do fundo */
+  --espaco-claro: #2b1a6b;/* roxo mais claro (nebulosa) */
+  --portal: #86ee3c;      /* verde do portal */
+  --amarelo: #ffdc3d;     /* amarelo da camiseta do Morty */
+  --azul: #a9e7ff;        /* azul do cabelo do Rick */
+  --papel: #eef8f3;       /* fundo dos cards */
+  --tinta: #17112e;       /* cor do texto nos cards */
+  --vivo: #2fb04a;
+  --morto: #d8443b;
+  --incerto: #8a8aa8;
+  --fonte-titulo: "Lilita One", "Arial Black", Impact, sans-serif;
+  --fonte-texto: "Space Grotesk", "Segoe UI", Arial, sans-serif;
+}
+
+/* Reset: tira as margens padrão do navegador e faz o width incluir padding e borda. */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Estilo geral da página: fonte, cor do texto e o céu estrelado do fundo. */
+body {
+  font-family: var(--fonte-texto);
+  color: #f1edff;
+  line-height: 1.5;
+  min-height: 100vh;
+  background-color: var(--espaco);
+  /* estrelinhas: vários pontos de tamanhos e posições diferentes, repetidos */
+  background-image:
+    radial-gradient(1.5px 1.5px at 30px 40px, #fff, transparent),
+    radial-gradient(1px 1px at 140px 90px, var(--azul), transparent),
+    radial-gradient(2px 2px at 220px 170px, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1px 1px at 90px 200px, var(--amarelo), transparent),
+    radial-gradient(ellipse at 20% 0%, var(--espaco-claro), transparent 55%),
+    radial-gradient(ellipse at 90% 40%, rgba(134, 238, 60, 0.12), transparent 45%);
+  background-size: 260px 240px, 260px 240px, 260px 240px, 260px 240px, auto, auto;
+  background-attachment: fixed;
+}
+
+/* Foco visível pra quem navega pelo teclado (Tab). */
+:focus-visible {
+  outline: 3px solid var(--amarelo);
+  outline-offset: 3px;
+}
+
+/* ---------- TOPO ---------- */
+
+/* Cabeçalho: texto e controles na esquerda, portal na direita (vira coluna no celular). */
+.hero {
+  max-width: 1150px;
+  margin: 0 auto;
+  padding: 56px 20px 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+}
+
+.hero-texto {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Título principal da página. */
+h1 {
+  font-family: var(--fonte-titulo);
+  font-weight: normal;
+  font-size: clamp(3rem, 9vw, 6rem);
+  line-height: 0.95;
+  letter-spacing: 1px;
+  color: var(--portal);
+  /* contorno escuro + brilho verde, no estilo logotipo de desenho */
+  -webkit-text-stroke: 2px #0b3d12;
+  text-shadow: 5px 5px 0 #0b3d12, 0 0 36px rgba(134, 238, 60, 0.5);
+}
+
+/* Frase logo abaixo do título. */
+.sub {
+  margin: 18px 0 26px;
+  max-width: 46ch;
+  font-size: 1.1rem;
+  color: #cfc6f5;
+}
+
+/* O PORTAL: botão redondo feito só com CSS (dois anéis girando em sentidos opostos). */
+.portal {
+  position: relative;
+  flex: none;
+  width: clamp(190px, 28vw, 300px);
+  aspect-ratio: 1;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  filter: drop-shadow(0 0 28px rgba(134, 238, 60, 0.65));
+  transition: transform 0.25s;
+}
+
+.portal:hover {
+  transform: scale(1.06);
+}
+
+/* anel de fora */
+.portal::before,
+.portal::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+}
+
+.portal::before {
+  inset: 0;
+  background: conic-gradient(from 0deg, #d8ffa8, #2f9e1a, #eaffc2, #1d7a10, #9bff55, #2f9e1a, #d8ffa8);
+  -webkit-mask: radial-gradient(circle, transparent 56%, #000 57%);
+  mask: radial-gradient(circle, transparent 56%, #000 57%);
+  animation: girar 7s linear infinite;
+}
+
+/* anel de dentro, gira ao contrário */
+.portal::after {
+  inset: 11%;
+  background: conic-gradient(from 90deg, #1d7a10, #c9ff8a, #1d7a10, #6fe02e, #1d7a10);
+  -webkit-mask: radial-gradient(circle, transparent 62%, #000 63%);
+  mask: radial-gradient(circle, transparent 62%, #000 63%);
+  animation: girar 4.5s linear infinite reverse;
+}
+
+/* miolo escuro com o texto do botão */
+.portal span {
+  position: absolute;
+  inset: 22%;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: radial-gradient(circle, #0e3a1a, #04120a 75%);
+  font-family: var(--fonte-titulo);
+  font-size: clamp(1rem, 2.4vw, 1.5rem);
+  color: var(--portal);
+  text-align: center;
+  padding: 0 8%;
+}
+
+/* Animação do portal: uma volta completa. */
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}
+
+/* ---------- CONTROLES ---------- */
+
+/* Linha com busca, filtro e botão de favoritos (flex com quebra de linha). */
+.controles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Aparência em comum dos campos e botões. */
+input,
+select,
+button {
+  font-family: inherit;
+  font-size: 1rem;
+  padding: 11px 16px;
+  border-radius: 999px;
+  border: 2px solid rgba(169, 231, 255, 0.35);
+  background: rgba(10, 5, 35, 0.6);
+  color: #f1edff;
+}
+
+input {
+  flex: 1 1 240px;
+}
+
+input::placeholder {
+  color: #9d93cf;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: var(--portal);
+  box-shadow: 0 0 0 4px rgba(134, 238, 60, 0.2);
+}
+
+/* Botões: cursor de mão e efeito ao passar o mouse. */
+button {
+  cursor: pointer;
+  font-weight: 700;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+button:hover:not(:disabled) {
+  background: var(--portal);
+  border-color: var(--portal);
+  color: #0b2a10;
+}
+
+button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Botão de favoritos quando a lista de favoritos está aberta. */
+#btn-favoritos.ativo {
+  background: var(--amarelo);
+  border-color: var(--amarelo);
+  color: #2a2000;
+}
+
+/* ---------- CONTEÚDO ---------- */
+
+/* Área central onde ficam os cards. */
+main {
+  max-width: 1150px;
+  margin: 0 auto;
+  padding: 10px 20px 40px;
+}
+
+/* Texto de status (carregando, total de resultados ou erro). */
+.mensagem {
+  min-height: 28px;
+  margin-bottom: 18px;
+  color: var(--azul);
+  font-weight: 500;
+}
+
+.mensagem.erro {
+  color: #ff9d94;
+}
+
+/* Grade responsiva: encaixa quantas colunas couberem (mínimo de 250px cada). */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 26px;
+}
+
+/* ---------- CARD ---------- */
+
+/* Cada card é uma ficha de identificação: papel claro, borda escura e sombra "de gibi" verde. */
+.card {
+  --anel: var(--incerto); /* cor do anel da foto, muda conforme o status */
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px 18px;
+  background: var(--papel);
+  color: var(--tinta);
+  border: 3px solid var(--tinta);
+  border-radius: 20px;
+  box-shadow: 6px 6px 0 var(--portal);
+  /* entrada dos cards: aparecem em sequência quando a página carrega (--i é a posição do card) */
+  animation: entrar 0.45s ease-out backwards;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+
+.card.alive { --anel: var(--vivo); }
+.card.dead { --anel: var(--morto); }
+
+@keyframes entrar {
+  from { opacity: 0; transform: translateY(14px); }
+}
+
+/* Faixa de cima do card: número do personagem à esquerda e coração à direita. */
+.topo-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.codigo {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #5b5578;
+}
+
+/* Botão de coração (favoritar). */
+.coracao {
+  padding: 0 4px;
+  border: none;
+  background: none;
+  font-size: 1.7rem;
+  line-height: 1;
+  color: var(--morto);
+}
+
+.coracao:hover:not(:disabled) {
+  background: none;
+  color: var(--morto);
+  transform: scale(1.2);
+}
+
+/* Foto redonda. O padding + background cria o anel colorido do status em volta da imagem. */
+.foto {
+  position: relative;
+  width: 78%;
+  margin: 0 auto 6px;
+  aspect-ratio: 1;
+  padding: 6px;
+  border-radius: 50%;
+  background: var(--anel);
+}
+
+.foto img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 3px solid var(--papel);
+  background: #cfd8dc;
+}
+
+/* Etiqueta de status, presa na parte de baixo da foto. */
+.selo {
+  position: absolute;
+  left: 50%;
+  bottom: -10px;
+  transform: translateX(-50%);
+  padding: 2px 14px;
+  border-radius: 999px;
+  border: 2px solid var(--tinta);
+  background: var(--anel);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+/* Nome do personagem. */
+.card h2 {
+  margin-top: 6px;
+  font-family: var(--fonte-titulo);
+  font-weight: normal;
+  font-size: 1.55rem;
+  line-height: 1.1;
+  text-align: center;
+  min-height: 3.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Espécie e gênero em "pílulas". */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.chips span {
+  padding: 2px 12px;
+  border-radius: 999px;
+  background: #d3ebe0;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* Lista de informações (origem e última localização). */
+.info p {
+  padding: 6px 0;
+  font-size: 0.92rem;
+  border-top: 1px dashed #9db8ab;
+}
+
+.info strong {
+  display: block;
+  font-size: 0.8rem;
+  color: #5b5578;
+}
+
+/* Quantidade de episódios: texto + barra proporcional (51 episódios = barra cheia). */
+.episodios p {
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+/* Fundo da barra de episódios. */
+.trilho {
+  height: 10px;
+  border-radius: 6px;
+  background: #cfe3d8;
+  overflow: hidden;
+}
+
+/* Parte colorida da barra. A largura (%) é definida pelo JavaScript. */
+.preenchimento {
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--vivo), var(--portal));
+}
+
+/* Card "fantasma" que aparece enquanto a API ainda não respondeu. */
+.esqueleto {
+  min-height: 420px;
+  box-shadow: 6px 6px 0 rgba(134, 238, 60, 0.35);
+  background: linear-gradient(100deg, #dfece6 30%, #f6fcf9 50%, #dfece6 70%);
+  background-size: 250% 100%;
+  animation: brilho 1.3s linear infinite;
+}
+
+@keyframes brilho {
+  to { background-position: -150% 0; }
+}
+
+/* ---------- PAGINAÇÃO E RODAPÉ ---------- */
+
+/* Botões de página anterior e próxima. */
+.paginacao {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+  margin-top: 40px;
+}
+
+/* Rodapé da página. */
+footer {
+  padding: 24px 20px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #9d93cf;
+  border-top: 1px solid rgba(169, 231, 255, 0.2);
+}
+
+footer a {
+  color: var(--azul);
+}
+
+/* ---------- CELULAR ---------- */
+
+/* Ajustes para celular (até 640px): topo em coluna, 2 colunas de cards e fontes menores. */
+@media (max-width: 640px) {
+  .hero {
+    flex-direction: column-reverse;
+    text-align: center;
+    padding-top: 30px;
+    gap: 26px;
+  }
+
+  .sub { margin-left: auto; margin-right: auto; }
+  .controles { justify-content: center; }
+
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  .card { padding: 10px 10px 14px; box-shadow: 4px 4px 0 var(--portal); gap: 8px; }
+  .card h2 { font-size: 1.15rem; min-height: 2.6rem; }
+  .foto { width: 86%; }
+  .info p, .chips span { font-size: 0.78rem; }
+  .esqueleto { min-height: 300px; }
+}
+
+/* Respeita quem desativou animações no sistema (acessibilidade). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
