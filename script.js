@@ -45,6 +45,18 @@ let numeroRequisicao = 0;
 let favoritos = JSON.parse(localStorage.getItem("favoritos")) || [];
 
 // a API devolve tudo em inglês, então traduzo na hora de mostrar
+/**
+ * Cache das respostas da API: guarda o resultado de cada URL já pedida.
+ * Se o usuário voltar pra uma página que já viu, mostro na hora e NÃO gasto outra requisição.
+ * Também salvo no sessionStorage, então o cache sobrevive se a página for recarregada (F5).
+ */
+let cache = {};
+try {
+  cache = JSON.parse(sessionStorage.getItem("cachePersonagens")) || {};
+} catch (erro) {
+  cache = {};
+}
+
 const statusPt = { Alive: "Vivo", Dead: "Morto", unknown: "Desconhecido" };
 const generoPt = { Male: "Masculino", Female: "Feminino", Genderless: "Sem gênero", unknown: "Desconhecido" };
 
@@ -78,14 +90,7 @@ function buscarPersonagens() {
     url += "&status=" + selectStatus.value;
   }
 
-  fetch(url)
-    .then(function (resposta) {
-      // quando a busca não acha nada a API devolve 404
-      if (!resposta.ok) {
-        throw new Error("Nenhum personagem encontrado com esses filtros. Tente outro nome.");
-      }
-      return resposta.json();
-    })
+  pedirApi(url, minhaVez)
     .then(function (dados) {
       if (minhaVez !== numeroRequisicao) { return; } // resposta antiga, ignora
 
@@ -99,13 +104,75 @@ function buscarPersonagens() {
 
       areaCards.innerHTML = "";
       mensagem.classList.add("erro");
-      // TypeError = o fetch nem chegou na API (sem internet, por exemplo)
-      mensagem.textContent = erro instanceof TypeError
-        ? "Não consegui falar com a API. Confira sua internet e tente de novo."
-        : erro.message;
+      if (erro.message === "NAO_ENCONTRADO") {
+        mensagem.textContent = "Nenhum personagem encontrado com esses filtros. Tente outro nome.";
+      } else {
+        mensagem.textContent = "A API está bloqueando por excesso de requisições. Espere cerca de 1 minuto e clique em Próxima ou recarregue a página.";
+      }
       totalPaginas = 1;
       pagina = 1;
       atualizarBotoes();
+    });
+}
+
+/**
+ * Faz a requisição à API com cache e nova tentativa automática.
+ *
+ * Por que isso existe: a API tem um limite de requisições. Quando passa dele, responde
+ * 429 (Too Many Requests) SEM o cabeçalho de CORS, e o navegador mostra um erro de CORS
+ * que engana (o problema real é o limite, não o CORS).
+ *
+ * O que a função faz:
+ *  1. se a URL já está no cache, devolve na hora (sem gastar requisição);
+ *  2. senão faz o fetch; 404 vira o erro "NAO_ENCONTRADO" (busca sem resultado, não adianta repetir);
+ *  3. se falhar por outro motivo (429, rede), espera alguns segundos e tenta de novo, até 3 vezes;
+ *  4. se der certo, guarda no cache.
+ *
+ * @param {string} url - endereço completo da requisição
+ * @param {number} minhaVez - número da requisição; se já passou outra, para de tentar
+ * @param {number} [tentativa=0] - quantas tentativas já foram feitas (uso interno)
+ * @returns {Promise<Object>} os dados da API já convertidos de JSON
+ */
+function pedirApi(url, minhaVez, tentativa) {
+  tentativa = tentativa || 0;
+
+  if (cache[url]) {
+    return Promise.resolve(cache[url]);
+  }
+
+  return fetch(url)
+    .then(function (resposta) {
+      if (resposta.status === 404) {
+        throw new Error("NAO_ENCONTRADO");
+      }
+      if (!resposta.ok) {
+        throw new Error("HTTP " + resposta.status);
+      }
+      return resposta.json();
+    })
+    .then(function (dados) {
+      cache[url] = dados;
+      try {
+        sessionStorage.setItem("cachePersonagens", JSON.stringify(cache));
+      } catch (erro) {
+        // se o armazenamento encher, tudo bem: continua só com o cache em memória
+      }
+      return dados;
+    })
+    .catch(function (erro) {
+      // não repete se a busca não achou nada, se esgotou as tentativas ou se o usuário já pediu outra coisa
+      if (erro.message === "NAO_ENCONTRADO" || tentativa >= 3 || minhaVez !== numeroRequisicao) {
+        throw erro;
+      }
+
+      const segundos = (tentativa + 1) * 3; // espera 3s, depois 6s, depois 9s
+      mensagem.textContent = "A API pediu uma pausa. Tentando de novo em " + segundos + " segundos...";
+
+      return new Promise(function (resolver) {
+        setTimeout(resolver, segundos * 1000);
+      }).then(function () {
+        return pedirApi(url, minhaVez, tentativa + 1);
+      });
     });
 }
 
@@ -304,8 +371,7 @@ function mostrarFavoritos() {
   mensagem.textContent = "Carregando favoritos...";
   mostrarEsqueleto();
 
-  fetch(urlApi + "/" + favoritos.join(","))
-    .then(function (resposta) { return resposta.json(); })
+  pedirApi(urlApi + "/" + favoritos.join(","), minhaVez)
     .then(function (dados) {
       if (minhaVez !== numeroRequisicao) { return; }
 
@@ -317,7 +383,7 @@ function mostrarFavoritos() {
       if (minhaVez !== numeroRequisicao) { return; }
       areaCards.innerHTML = "";
       mensagem.classList.add("erro");
-      mensagem.textContent = "Não consegui carregar os favoritos. Tente de novo.";
+      mensagem.textContent = "Não consegui carregar os favoritos. Espere um pouco e tente de novo.";
     });
 }
 
